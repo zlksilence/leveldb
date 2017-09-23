@@ -24,11 +24,13 @@
 #include <string>
 #include "leveldb/status.h"
 
+#include "../../../leveldb_exports.h"
+
 namespace leveldb {
 
 class Slice;
 
-class WriteBatch {
+class LEVELDB_EXPORT WriteBatch {
  public:
   WriteBatch();
   ~WriteBatch();

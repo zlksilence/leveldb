@@ -10,6 +10,8 @@
 #include "leveldb/iterator.h"
 #include "leveldb/options.h"
 
+#include "../../../leveldb_exports.h"
+
 namespace leveldb {
 
 // Update Makefile if you change these
@@ -41,7 +43,7 @@ struct Range {
 // A DB is a persistent ordered map from keys to values.
 // A DB is safe for concurrent access from multiple threads without
 // any external synchronization.
-class DB {
+class LEVELDB_EXPORT DB {
  public:
   // Open the database with the specified "name".
   // Stores a pointer to a heap-allocated database in *dbptr and returns
@@ -150,13 +152,13 @@ class DB {
 
 // Destroy the contents of the specified database.
 // Be very careful using this method.
-Status DestroyDB(const std::string& name, const Options& options);
+LEVELDB_EXPORT Status DestroyDB(const std::string& name, const Options& options);
 
 // If a DB cannot be opened, you may attempt to call this method to
 // resurrect as much of the contents of the database as possible.
 // Some data may be lost, so be careful when calling this function
 // on a database that contains important information.
-Status RepairDB(const std::string& dbname, const Options& options);
+LEVELDB_EXPORT Status RepairDB(const std::string& dbname, const Options& options);
 
 }  // namespace leveldb
 

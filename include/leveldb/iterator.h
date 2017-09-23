@@ -18,9 +18,11 @@
 #include "leveldb/slice.h"
 #include "leveldb/status.h"
 
+#include "../../../leveldb_exports.h"
+
 namespace leveldb {
 
-class Iterator {
+class LEVELDB_EXPORT Iterator {
  public:
   Iterator();
   virtual ~Iterator();

@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "../../../leveldb_exports.h"
+
 namespace leveldb {
 
 class Slice;
@@ -15,7 +17,7 @@ class Slice;
 // used as keys in an sstable or a database.  A Comparator implementation
 // must be thread-safe since leveldb may invoke its methods concurrently
 // from multiple threads.
-class Comparator {
+class LEVELDB_EXPORT Comparator {
  public:
   virtual ~Comparator();
 
