@@ -44,7 +44,7 @@ struct LEVELDB_EXPORT Options {
   // If true, the database will be created if it is missing.
   // Default: false
   bool create_if_missing;
-
+//如果为真，
   // If true, an error is raised if the database already exists.
   // Default: false
   bool error_if_exists;

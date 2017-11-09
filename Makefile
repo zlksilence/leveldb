@@ -8,6 +8,10 @@
 
 # (A) Production use (optimized mode)
 OPT ?= -O2 -DNDEBUG
+#修改编译参数
+OPT ?= -g2
+#添加TESTS=
+
 # (B) Debug mode, w/ full line-level debugging symbols
 # OPT ?= -g2
 # (C) Profiling mode: opt, but w/debugging symbols
@@ -21,6 +25,7 @@ $(shell CC="$(CC)" CXX="$(CXX)" TARGET_OS="$(TARGET_OS)" \
 include build_config.mk
 
 TESTS = \
+	db/test	\
 	db/autocompact_test \
 	db/c_test \
 	db/corruption_test \
@@ -299,6 +304,9 @@ $(SHARED_MEMENVLIB):$(SHARED_MEMENVOBJECTS)
 	rm -f $@
 	$(AR) -rs $@ $(SHARED_MEMENVOBJECTS)
 
+$(STATIC_OUTDIR)/test:db/test.cc $(STATIC_LIBOBJECTS) $(TESTHARNESS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) db/test.cc $(STATIC_LIBOBJECTS) $(TESTHARNESS) -o $@ $(LIBS)
+	
 $(STATIC_OUTDIR)/db_bench:db/db_bench.cc $(STATIC_LIBOBJECTS) $(TESTUTIL)
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) db/db_bench.cc $(STATIC_LIBOBJECTS) $(TESTUTIL) -o $@ $(LIBS)
 
@@ -432,3 +440,12 @@ $(STATIC_OUTDIR)/port/port_posix_sse.o: port/port_posix_sse.cc
 
 $(SHARED_OUTDIR)/port/port_posix_sse.o: port/port_posix_sse.cc
 	$(CXX) $(CXXFLAGS) $(SHARED_BUILD_CXXFLAGS) $(PLATFORM_SHARED_CFLAGS) $(PLATFORM_SSEFLAGS) -c $< -o $@
+	
+	
+	
+	
+	
+	
+
+#添加下列到相应的地方
+

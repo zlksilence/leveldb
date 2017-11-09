@@ -22,6 +22,7 @@ namespace leveldb {
 
 class SCOPED_LOCKABLE MutexLock {
  public:
+	//利用C++ 构造函数和析构函数自动完成加锁核解锁
   explicit MutexLock(port::Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu)
       : mu_(mu)  {
     this->mu_->Lock();

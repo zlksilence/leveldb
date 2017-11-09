@@ -17,7 +17,7 @@ namespace leveldb {
 
 inline uint32_t Block::NumRestarts() const {
   assert(size_ >= sizeof(uint32_t));
-  return DecodeFixed32(data_ + size_ - sizeof(uint32_t));
+  return DecodeFixed32(data_ + size_ - sizeof(uint32_t));//即取最后四个字节并解析 num_restart
 }
 
 Block::Block(const BlockContents& contents)
@@ -32,6 +32,7 @@ Block::Block(const BlockContents& contents)
       // The size is too small for NumRestarts()
       size_ = 0;
     } else {
+    	//计算重启点偏移量 Offset in data_ of restart array
       restart_offset_ = size_ - (1 + NumRestarts()) * sizeof(uint32_t);
     }
   }
@@ -50,6 +51,7 @@ Block::~Block() {
 //
 // If any errors are detected, returns NULL.  Otherwise, returns a
 // pointer to the key delta (just past the three decoded values).
+//每个部分都是32字节 解析出key值 剩余指向value区 limit是restart 数组首地址
 static inline const char* DecodeEntry(const char* p, const char* limit,
                                       uint32_t* shared,
                                       uint32_t* non_shared,
@@ -83,8 +85,8 @@ class Block::Iter : public Iterator {
   // current_ is offset in data_ of current entry.  >= restarts_ if !Valid
   uint32_t current_;
   uint32_t restart_index_;  // Index of restart block in which current_ falls
-  std::string key_;
-  Slice value_;
+  std::string key_; //非共享内容
+  Slice value_;		//整个value指针
   Status status_;
 
   inline int Compare(const Slice& a, const Slice& b) const {
@@ -92,15 +94,20 @@ class Block::Iter : public Iterator {
   }
 
   // Return the offset in data_ just past the end of the current entry.
+  //计算Record偏移 当在value存的是restart点的Record首地址时 size为0
+  //其他value存的是非restart的Record记录中的value首地址值（key非共享内容首地址）
+  //返回的永远是一个Record在data_中偏移量
   inline uint32_t NextEntryOffset() const {
     return (value_.data() + value_.size()) - data_;
   }
-
+  //此获取restart 数组中第index偏移的内容 即 restart点在data_中实际偏移
   uint32_t GetRestartPoint(uint32_t index) {
     assert(index < num_restarts_);
     return DecodeFixed32(data_ + restarts_ + index * sizeof(uint32_t));
   }
-
+  //value 将存储restart点Record首地址 包含key和value
+  //参数index 为restart数组的偏移  后面二分查找到的目标key所在restart点的偏移
+  //解析可通过DecodeEntry 函数解析key值，完成后value将仅仅指向value区而不是key区
   void SeekToRestartPoint(uint32_t index) {
     key_.clear();
     restart_index_ = index;
@@ -108,6 +115,7 @@ class Block::Iter : public Iterator {
 
     // ParseNextKey() starts at the end of value_, so set value_ accordingly
     uint32_t offset = GetRestartPoint(index);
+    //value存储restart点Record首地址 0是配合后面计算
     value_ = Slice(data_ + offset, 0);
   }
 
@@ -162,11 +170,13 @@ class Block::Iter : public Iterator {
     } while (ParseNextKey() && NextEntryOffset() < original);
   }
 
+  //
   virtual void Seek(const Slice& target) {
     // Binary search in restart array to find the last restart point
     // with a key < target
     uint32_t left = 0;
     uint32_t right = num_restarts_ - 1;
+    //二分查找 首先找restart数组中间的restart点，判断目标与此restart点key值大小关系
     while (left < right) {
       uint32_t mid = (left + right + 1) / 2;
       uint32_t region_offset = GetRestartPoint(mid);
@@ -175,6 +185,7 @@ class Block::Iter : public Iterator {
                                         data_ + restarts_,
                                         &shared, &non_shared, &value_length);
       if (key_ptr == NULL || (shared != 0)) {
+    	  //错误条件 值为空 或restart点上shared不为0,正餐restart点shared为0
         CorruptionError();
         return;
       }
@@ -189,9 +200,9 @@ class Block::Iter : public Iterator {
         right = mid - 1;
       }
     }
-
+    //此时目标key必在restart点和下一个restart点之间
     // Linear search (within restart block) for first key >= target
-    SeekToRestartPoint(left);
+    SeekToRestartPoint(left); //value将指向restart点的整个Record记录
     while (true) {
       if (!ParseNextKey()) {
         return;
@@ -222,7 +233,7 @@ class Block::Iter : public Iterator {
     key_.clear();
     value_.clear();
   }
-
+  //寻找下一个Record
   bool ParseNextKey() {
     current_ = NextEntryOffset();
     const char* p = data_ + current_;
@@ -241,6 +252,7 @@ class Block::Iter : public Iterator {
       CorruptionError();
       return false;
     } else {
+    	//key_先保存上一条记录的key值
       key_.resize(shared);
       key_.append(p, non_shared);
       value_ = Slice(p + non_shared, value_length);

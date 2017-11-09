@@ -21,14 +21,14 @@ class Block {
 
   ~Block();
 
-  size_t size() const { return size_; }
+  size_t size() const { return size_; } //size of block
   Iterator* NewIterator(const Comparator* comparator);
 
  private:
   uint32_t NumRestarts() const;
 
-  const char* data_;
-  size_t size_;
+  const char* data_;	//block数据指针
+  size_t size_;	//block 数据大小
   uint32_t restart_offset_;     // Offset in data_ of restart array
   bool owned_;                  // Block owns data_[]
 

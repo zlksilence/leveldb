@@ -81,9 +81,9 @@ class Mutex {
 
  private:
   friend class CondVar;
-  pthread_mutex_t mu_;
+  pthread_mutex_t mu_;//
 
-  // No copying
+  // No copying 显示声明构造函数和重载 防止编译器默认生成
   Mutex(const Mutex&);
   void operator=(const Mutex&);
 };
@@ -103,7 +103,7 @@ class CondVar {
 typedef pthread_once_t OnceType;
 #define LEVELDB_ONCE_INIT PTHREAD_ONCE_INIT
 extern void InitOnce(OnceType* once, void (*initializer)());
-
+// snappy 是Google自己开发的压缩包，这里是为在支持Snappy的环境下使用Snappy压缩
 inline bool Snappy_Compress(const char* input, size_t length,
                             ::std::string* output) {
 #ifdef HAVE_SNAPPY
@@ -134,7 +134,7 @@ inline bool Snappy_Uncompress(const char* input, size_t length,
   return false;
 #endif  // defined(HAVE_SNAPPY)
 }
-
+// 这个应该是跟google的性能测试工具gperftools相关的接口
 inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg) {
   return false;
 }

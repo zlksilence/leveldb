@@ -65,7 +65,7 @@ inline void MemoryBarrier() {
 inline void MemoryBarrier() {
   // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
   // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
-  __asm__ __volatile__("" : : : "memory");
+  __asm__ __volatile__("" : : : "memory");//内嵌汇编
 }
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
@@ -122,6 +122,7 @@ inline void MemoryBarrier() {
 #endif
 
 // AtomicPointer built using platform-specific MemoryBarrier()
+// MemoryBarrier 内存屏障 防止编译器优化 用于多线程
 #if defined(LEVELDB_HAVE_MEMORY_BARRIER)
 class AtomicPointer {
  private:
@@ -130,10 +131,11 @@ class AtomicPointer {
   AtomicPointer() { }
   explicit AtomicPointer(void* p) : rep_(p) {}
   inline void* NoBarrier_Load() const { return rep_; }
+
   inline void NoBarrier_Store(void* v) { rep_ = v; }
   inline void* Acquire_Load() const {
     void* result = rep_;
-    MemoryBarrier();
+    MemoryBarrier();//内嵌汇编
     return result;
   }
   inline void Release_Store(void* v) {

@@ -9,17 +9,21 @@ Each database is represented by a set of files stored in a directory. There are
 several different types of files as documented below:
 
 ### Log files
-
+日志文件
+一个日志文件存储一系列的最近更新的数据。每个更新都是追加在现在的日志文件后面。当log文件大小达到一个预先设定的大小后（一般默认4MB），它会被转换成一个有序的表（看下面），并且一个新的log文件会被创建，以用于以后的更新数据
 A log file (*.log) stores a sequence of recent updates. Each update is appended
 to the current log file. When the log file reaches a pre-determined size
 (approximately 4MB by default), it is converted to a sorted table (see below)
 and a new log file is created for future updates.
-
+这个当前log 文件在内存中副本是保存在一个in-memory structure中（即memtable）。在每次阅读时都会查阅此副本，以便读操作可反映所有更新记录。
 A copy of the current log file is kept in an in-memory structure (the
 `memtable`). This copy is consulted on every read so that read operations
 reflect all logged updates.
 
 ## Sorted tables
+排序表（* .ldb）存储一系列按键排序的条目序列。每个条目也都是键的值，或键的删除标记。（删除标记被围绕以隐藏旧排序表中存在的过时值）。
+排序表的集合是以一系列级别组织的。排序一般从一个日志文件生成并被放置在一个特殊的**young**级别（也称levle-0）。当young文件的数量超过一定阈值时（目前为4），所有的young文件都与所有的Level-1重叠de 文件，一起产生一系列新的一级（level-1）文件（我们每2MB数据创建一个新的一级文件。）
+年轻级别的文件可能包含重叠的键。但其他文件级别具有不同的重叠范围。考虑级别L在哪里L> = 1。当级别-L中的文件的组合大小超过（10 ^ L）MB（即10MB对于级别1，级别为2100MB，...），L级中的一个文件，以及所有的层级（L + 1）中的重叠文件被合并以形成一组新的文件LEVEL-（L + 1）。这些合并具有逐渐迁移新更新的效果从年轻一级到最大级别只使用批量读写（即最小化昂贵的寻求）
 
 A sorted table (*.ldb) stores a sequence of entries sorted by key. Each entry is
 either a value for the key, or a deletion marker for the key. (Deletion markers

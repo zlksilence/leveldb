@@ -78,8 +78,10 @@ void BlockBuilder::Add(const Slice& key, const Slice& value) {
          || options_->comparator->Compare(key, last_key_piece) > 0);
   size_t shared = 0;
   if (counter_ < options_->block_restart_interval) {
+	  //未到重启点
     // See how much sharing to do with previous string
     const size_t min_length = std::min(last_key_piece.size(), key.size());
+    //计算共享key的长度
     while ((shared < min_length) && (last_key_piece[shared] == key[shared])) {
       shared++;
     }

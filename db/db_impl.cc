@@ -1211,6 +1211,9 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
   uint64_t last_sequence = versions_->LastSequence();
   Writer* last_writer = &w;
   if (status.ok() && my_batch != NULL) {  // NULL batch is for compactions
+	    // 这里引入了另外一个方法，什么作用？，这个也是精华所在，按队列中顺序合并
+	        // 在writers_队列中的batch，另外为啥队列中有多个batch，和之前的实现类似
+	        // 在不需要lock的时候释放lock，这个时候，batch就会将被加入到writers_中
     WriteBatch* updates = BuildBatchGroup(&last_writer);
     WriteBatchInternal::SetSequence(updates, last_sequence + 1);
     last_sequence += WriteBatchInternal::Count(updates);
@@ -1244,7 +1247,9 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
 
     versions_->SetLastSequence(last_sequence);
   }
-
+  //// 循环判断把已经被合并写入掉的batch，设置为done=true，并且中队列中取出，并
+  // 唤醒， 那个时候就形如done==true的分支，本来持有某batch的线程就完成，
+  // 这等于是某个线程代理完成了其他线程的行为
   while (true) {
     Writer* ready = writers_.front();
     writers_.pop_front();
